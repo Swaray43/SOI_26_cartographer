@@ -1,0 +1,72 @@
+# slam_toolbox configuration for online async mapping
+# This file tells slam_toolbox:
+#   - which topics and TF frames to use
+#   - how aggressively to match scans
+#   - how large to make the map
+#
+# Place this file at:
+#   ~/test_sensor_ws/src/test_robot_description/config/mapper_params_online_async.yaml
+
+slam_toolbox:
+  ros__parameters:
+
+    # ── Clock ──────────────────────────────────────────────────────────────
+    # Must be true when running in Gazebo — ROS time comes from /clock
+    use_sim_time: true
+
+    # ── TF frame names ─────────────────────────────────────────────────────
+    # These must exactly match what your DiffDrive plugin publishes (Patch 6).
+    # odom_frame  : the "dead-reckoning" frame — DiffDrive publishes odom→base_link
+    # base_frame  : the robot body frame
+    # map_frame   : slam_toolbox CREATES this frame and publishes map→odom
+    odom_frame: odom
+    base_frame: base_link
+    map_frame: map
+
+    # ── Lidar topic ────────────────────────────────────────────────────────
+    # The ROS topic where LaserScan messages arrive.
+    # This is the remapped name from our bridge (Patch 7 + bridge remapping).
+    scan_topic: /robot/scan
+
+    # ── Mapping mode ───────────────────────────────────────────────────────
+    # mapping  = build a new map (what we want for Live Mapping Runs)
+    # localization = use an existing saved map
+    mode: mapping
+
+    # ── Map update behaviour ────────────────────────────────────────────────
+    # How far (metres) or how much the robot must rotate (radians) before
+    # slam_toolbox adds a new scan to the map. Lower = more frequent updates
+    # but heavier CPU. These defaults work well for slow manual driving.
+    minimum_travel_distance: 0.1
+    minimum_travel_heading: 0.05
+
+    # ── Scan matcher settings ───────────────────────────────────────────────
+    # slam_toolbox aligns each new scan against the existing map using a
+    # correlative scan matcher followed by a Ceres optimiser.
+    # These defaults are safe starting values.
+    use_scan_matching: true
+    use_scan_barycenter: true
+    minimum_time_interval: 0.5
+    transform_timeout: 0.2
+    tf_buffer_duration: 30.0
+    stack_size_to_use: 40000000
+
+    # ── Map size ────────────────────────────────────────────────────────────
+    # The occupancy grid is initialised at this size and grows automatically.
+    # resolution: metres per cell (0.05 = 5 cm per cell, good for indoor use)
+    resolution: 0.05
+    max_laser_range: 12.0       # must match lidar <max> in SDF (12.0 m)
+    minimum_laser_range: 0.15   # must match lidar <min> in SDF (0.15 m)
+
+    # ── Serialisation (saving/loading maps) ────────────────────────────────
+    # slam_toolbox can save the map as a .posegraph file for later use.
+    # Leave blank during live mapping runs.
+    map_file_name: ""
+    map_start_at_dock: false
+
+    # ── Debug ──────────────────────────────────────────────────────────────
+    debug_logging: false
+    throttle_scans: 1           # process every scan (increase to skip scans)
+    transform_publish_period: 0.02   # how often to publish map→odom TF (s)
+    map_update_interval: 5.0         # how often to publish /map topic (s)
+    enable_interactive_mode: false
