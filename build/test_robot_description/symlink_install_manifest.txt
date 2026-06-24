@@ -1,4 +1,5 @@
 /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/launch/run_experiment_launch.py
+/home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/launch/run_navigation_launch.py
 /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/models/robot.sdf
 /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/worlds/test_ground.sdf
 /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/config/mapper_params_online_async.yaml

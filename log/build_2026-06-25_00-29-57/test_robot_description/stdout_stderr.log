@@ -19,6 +19,7 @@
 -- Install configuration: ""
 -- Execute custom install script
 -- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/launch/run_experiment_launch.py
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/launch/run_navigation_launch.py
 -- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/models/robot.sdf
 -- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/worlds/test_ground.sdf
 -- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/config/mapper_params_online_async.yaml
