@@ -1,0 +1,30 @@
+[0.007s] Invoking command in '/home/s43/test_sensor_ws/build/test_robot_description': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/s43/test_sensor_ws/build/test_robot_description -- -j20 -l20
+[0.038s] Invoked command in '/home/s43/test_sensor_ws/build/test_robot_description' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/s43/test_sensor_ws/build/test_robot_description -- -j20 -l20
+[0.044s] Invoking command in '/home/s43/test_sensor_ws/build/test_robot_description': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/s43/test_sensor_ws/build/test_robot_description
+[0.051s] -- Install configuration: ""
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/launch
+[0.051s] -- Installing: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/launch/complete_navigation.launch.py
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/launch/run_experiment_launch.py
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/models
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/models/robot.sdf
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/worlds
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/worlds/test_ground.sdf
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/config
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/config/mapper_params_online_async.yaml
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/config/nav2_params.yaml
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/ament_index/resource_index/package_run_dependencies/test_robot_description
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/ament_index/resource_index/parent_prefix_path/test_robot_description
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/environment/ament_prefix_path.sh
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/environment/ament_prefix_path.dsv
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/environment/path.sh
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/environment/path.dsv
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/local_setup.bash
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/local_setup.sh
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/local_setup.zsh
+[0.051s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/local_setup.dsv
+[0.051s] -- Installing: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/package.dsv
+[0.052s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/ament_index/resource_index/packages/test_robot_description
+[0.052s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/cmake/test_robot_descriptionConfig.cmake
+[0.052s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/cmake/test_robot_descriptionConfig-version.cmake
+[0.052s] -- Up-to-date: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/package.xml
+[0.053s] Invoked command in '/home/s43/test_sensor_ws/build/test_robot_description' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/s43/test_sensor_ws/build/test_robot_description

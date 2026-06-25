@@ -1,1 +1,44 @@
-/home/s43/test_sensor_ws/src/test_robot_description/config/mapper_params_online_async.yaml
+slam_toolbox:
+  ros__parameters:
+
+    # ── Clock ──────────────────────────────────────────────────────────────
+    use_sim_time: true
+
+    # ── TF frame names ─────────────────────────────────────────────────────
+    odom_frame: odom
+    base_frame: base_link
+    map_frame: map
+
+    # ── Lidar topic ────────────────────────────────────────────────────────
+    scan_topic: /robot/scan
+
+    # ── Mapping mode ───────────────────────────────────────────────────────
+    mode: mapping
+
+    # ── Map update behaviour ────────────────────────────────────────────────
+    minimum_travel_distance: 0.30
+    minimum_travel_heading: 0.30
+
+    # ── Scan matcher settings ───────────────────────────────────────────────
+    use_scan_matching: true
+    use_scan_barycenter: true
+    minimum_time_interval: 0.2
+    transform_timeout: 0.2
+    tf_buffer_duration: 30.0
+    stack_size_to_use: 40000000
+
+    # ── Map size ────────────────────────────────────────────────────────────
+    resolution: 0.05
+    max_laser_range: 12.0       
+    minimum_laser_range: 0.40
+
+    # ── Serialisation ──────────────────────────────────────────────────────
+    map_file_name: ""
+    map_start_at_dock: false
+
+    # ── Debug ──────────────────────────────────────────────────────────────
+    debug_logging: false
+    throttle_scans: 1           
+    transform_publish_period: 0.02   
+    map_update_interval: 2.0
+    enable_interactive_mode: false

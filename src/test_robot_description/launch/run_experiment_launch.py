@@ -10,7 +10,7 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('test_robot_description')
     world_path = os.path.join(pkg_dir, 'worlds', 'test_ground.sdf')
     robot_sdf_path = os.path.join(pkg_dir, 'models', 'robot.sdf')
-    slam_params_path = os.path.join(pkg_dir, 'config', 'mapper_params_online_async.yaml')
+    #slam_params_path = os.path.join(pkg_dir, 'config', 'mapper_params_online_async.yaml')
 
     with open(robot_sdf_path, 'r') as f:
         sdf = f.read()
@@ -120,7 +120,7 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 3. ROS ↔ Gazebo bridge
+  # 3. ROS ↔ Gazebo bridge
     parameter_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -132,11 +132,7 @@ def generate_launch_description():
             '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
             '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
         ],
-        remappings=[
-            ('/cmd_vel', '/robot/cmd_vel'),
-            ('/odom',    '/robot/odom'),
-            ('/scan',    '/robot/scan'),
-        ],
+        # REMOVED REMAPPINGS HERE
         output='screen'
     )
 
@@ -155,26 +151,26 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 5. slam_toolbox — delayed start via its official launch file (handles lifecycle transitions automatically)
-    slam_toolbox_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
-        ),
-        launch_arguments={
-            'slam_params_file': slam_params_path,
-            'use_sim_time': 'true'
-        }.items()
-    )
+   # # 5. slam_toolbox — delayed start via its official launch file (handles lifecycle transitions automatically)
+   # slam_toolbox_launch = IncludeLaunchDescription(
+    #    PythonLaunchDescriptionSource(
+    #        os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
+    #    ),
+    #    launch_arguments={
+    #        'slam_params_file': slam_params_path,
+    #        'use_sim_time': 'true'
+    #    }.items()
+   #)
 
-    slam_delayed = TimerAction(
-        period=5.0,
-        actions=[slam_toolbox_launch]
-    )
+    #slam_delayed = TimerAction(
+    #    period=5.0,
+    #    actions=[slam_toolbox_launch]
+    #)
 
     return LaunchDescription([
         gz_sim,
         spawn_robot,
         parameter_bridge,
         lidar_static_tf,
-        slam_delayed,
+        #slam_delayed,
     ])
