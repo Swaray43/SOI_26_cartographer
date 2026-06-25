@@ -65,13 +65,13 @@ controller_server:
         scale: 20.0
       BaseObstacle:
         plugin: "dwb_critics::BaseObstacleCritic"
-        scale: 5.0
+        scale: 62.0
       GoalAlign:
         plugin: "dwb_critics::GoalAlignCritic"
         scale: 24.0
       PathAlign:
         plugin: "dwb_critics::PathAlignCritic"
-        scale: 32.0
+        scale: 10.0
       PathDist:
         plugin: "dwb_critics::PathDistCritic"
         scale: 32.0
@@ -95,8 +95,8 @@ local_costmap:
       plugins: ["obstacle_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.55
+        cost_scaling_factor: 5.0
+        inflation_radius: 0.2
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
@@ -134,8 +134,8 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.55
+        cost_scaling_factor: 5.0
+        inflation_radius: 0.2
 
 planner_server:
   ros__parameters:
