@@ -1,0 +1,12 @@
+package.xml
+setup.cfg
+setup.py
+resource/robot_autonomy
+robot_autonomy/__init__.py
+robot_autonomy/mission_patrol.py
+robot_autonomy.egg-info/PKG-INFO
+robot_autonomy.egg-info/SOURCES.txt
+robot_autonomy.egg-info/dependency_links.txt
+robot_autonomy.egg-info/requires.txt
+robot_autonomy.egg-info/top_level.txt
+robot_autonomy.egg-info/zip-safe

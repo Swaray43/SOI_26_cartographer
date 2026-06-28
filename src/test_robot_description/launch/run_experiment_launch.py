@@ -1,16 +1,16 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, TimerAction
+from launch.actions import IncludeLaunchDescription, TimerAction, GroupAction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetRemap
 
 
 def generate_launch_description():
     pkg_dir = get_package_share_directory('test_robot_description')
-    world_path = os.path.join(pkg_dir, 'worlds', 'test_ground.sdf')
+    world_path = os.path.join(pkg_dir, 'worlds', 'training_world_3.sdf')
     robot_sdf_path = os.path.join(pkg_dir, 'models', 'robot.sdf')
-    #slam_params_path = os.path.join(pkg_dir, 'config', 'mapper_params_online_async.yaml')
+    slam_params_path = os.path.join(pkg_dir, 'config', 'mapper_params_online_async.yaml')
 
     with open(robot_sdf_path, 'r') as f:
         sdf = f.read()
@@ -120,7 +120,7 @@ def generate_launch_description():
         output='screen'
     )
 
-  # 3. ROS ↔ Gazebo bridge
+    # 3. ROS ↔ Gazebo bridge
     parameter_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -132,7 +132,6 @@ def generate_launch_description():
             '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
             '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
         ],
-        # REMOVED REMAPPINGS HERE
         output='screen'
     )
 
@@ -151,26 +150,33 @@ def generate_launch_description():
         output='screen'
     )
 
-   # # 5. slam_toolbox — delayed start via its official launch file (handles lifecycle transitions automatically)
-   # slam_toolbox_launch = IncludeLaunchDescription(
-    #    PythonLaunchDescriptionSource(
-    #        os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
-    #    ),
-    #    launch_arguments={
-    #        'slam_params_file': slam_params_path,
-    #        'use_sim_time': 'true'
-    #    }.items()
-   #)
+    # 5. slam_toolbox — delayed start via its official launch file
+    slam_toolbox_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
+        ),
+        launch_arguments={
+            'slam_params_file': slam_params_path,
+            'use_sim_time': 'true'
+        }.items()
+    )
 
-    #slam_delayed = TimerAction(
-    #    period=5.0,
-    #    actions=[slam_toolbox_launch]
-    #)
+    # Wrap the SLAM launch in a GroupAction to apply the topic remapping
+    slam_group = GroupAction([
+        SetRemap(src='/robot/scan', dst='/scan'),
+        slam_toolbox_launch
+    ])
+
+    # Pass the slam_group to the TimerAction instead of slam_toolbox_launch
+    slam_delayed = TimerAction(
+        period=5.0,
+        actions=[slam_group]
+    )
 
     return LaunchDescription([
         gz_sim,
         spawn_robot,
         parameter_bridge,
         lidar_static_tf,
-        #slam_delayed,
+        slam_delayed,
     ])

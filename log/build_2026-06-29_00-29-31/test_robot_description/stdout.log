@@ -1,0 +1,42 @@
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Configuring done (0.5s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/s43/test_sensor_ws/build/test_robot_description
+-- Install configuration: ""
+-- Execute custom install script
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/launch/complete_navigation.launch.py
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/launch/run_experiment_launch.py
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/models/robot.sdf
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/worlds/test_ground.sdf
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/worlds/training_world_3.sdf
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/config/mapper_params_online_async.yaml
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/config/nav2_params.yaml
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/ament_index/resource_index/package_run_dependencies/test_robot_description
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/ament_index/resource_index/parent_prefix_path/test_robot_description
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/environment/ament_prefix_path.sh
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/environment/ament_prefix_path.dsv
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/environment/path.sh
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/environment/path.dsv
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/local_setup.bash
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/local_setup.sh
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/local_setup.zsh
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/local_setup.dsv
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/package.dsv
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/ament_index/resource_index/packages/test_robot_description
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/cmake/test_robot_descriptionConfig.cmake
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/cmake/test_robot_descriptionConfig-version.cmake
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/package.xml
