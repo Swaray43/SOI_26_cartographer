@@ -21,8 +21,7 @@
 -- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/launch/complete_navigation.launch.py
 -- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/launch/run_experiment_launch.py
 -- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/models/robot.sdf
--- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/worlds/test_ground.sdf
--- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/worlds/training_world_3.sdf
+-- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/worlds/training_world_1.sdf
 -- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/config/mapper_params_online_async.yaml
 -- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/test_robot_description/config/nav2_params.yaml
 -- Symlinking: /home/s43/test_sensor_ws/install/test_robot_description/share/ament_index/resource_index/package_run_dependencies/test_robot_description

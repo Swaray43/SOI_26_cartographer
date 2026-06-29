@@ -8,7 +8,9 @@ from launch_ros.actions import Node, SetRemap
 
 def generate_launch_description():
     pkg_dir = get_package_share_directory('test_robot_description')
-    world_path = os.path.join(pkg_dir, 'worlds', 'training_world_3.sdf')
+    
+    # Reverted back to training_world_1.sdf as requested
+    world_path = os.path.join(pkg_dir, 'worlds', 'training_world_1.sdf')
     robot_sdf_path = os.path.join(pkg_dir, 'models', 'robot.sdf')
     slam_params_path = os.path.join(pkg_dir, 'config', 'mapper_params_online_async.yaml')
 
@@ -16,7 +18,7 @@ def generate_launch_description():
         sdf = f.read()
 
     # =========================================================================
-    # RUNTIME SDF PATCHES
+    # RUNTIME ROBOT SDF PATCHES (Keeping core model fixes)
     # =========================================================================
 
     # PATCH 1 – Disable self-collision
@@ -93,33 +95,10 @@ def generate_launch_description():
         '<sensor name="gpu_lidar" type="gpu_lidar">\n        <topic>/scan</topic>'
     )
 
-    # PATCH 8 – Inject zero-friction surface into the caster dynamically
-    caster_link_idx = sdf.find('<link name="caster')
-    if caster_link_idx != -1:
-        # Find the closing collision tag specifically for the caster link
-        collision_end_idx = sdf.find('</collision>', caster_link_idx)
-        if collision_end_idx != -1:
-            friction_xml = """
-        <surface>
-          <friction>
-            <ode>
-              <mu>0.0</mu>
-              <mu2>0.0</mu2>
-              <slip1>1.0</slip1>
-              <slip2>1.0</slip2>
-            </ode>
-          </friction>
-        </surface>
-"""
-            # Slice the string and insert the friction block right before </collision>
-            sdf = sdf[:collision_end_idx] + friction_xml + sdf[collision_end_idx:]
-
-
     # =========================================================================
     # LAUNCH NODES
     # =========================================================================
 
-    # 1. Gazebo Sim
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             os.path.join(
@@ -130,7 +109,6 @@ def generate_launch_description():
         launch_arguments={'gz_args': f'-r {world_path}'}.items()
     )
 
-    # 2. Spawn robot
     spawn_robot = Node(
         package='ros_gz_sim',
         executable='create',
@@ -142,7 +120,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 3. ROS ↔ Gazebo bridge
     parameter_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -154,10 +131,10 @@ def generate_launch_description():
             '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
             '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
         ],
+        parameters=[{'use_sim_time': True}],
         output='screen'
     )
 
-    # 4. Static TF: base_link → robot/lidar_link/gpu_lidar
     lidar_static_tf = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -172,7 +149,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 5. slam_toolbox — delayed start via its official launch file
     slam_toolbox_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
@@ -183,13 +159,11 @@ def generate_launch_description():
         }.items()
     )
 
-    # Wrap the SLAM launch in a GroupAction to apply the topic remapping
     slam_group = GroupAction([
         SetRemap(src='/robot/scan', dst='/scan'),
         slam_toolbox_launch
     ])
 
-    # Pass the slam_group to the TimerAction instead of slam_toolbox_launch
     slam_delayed = TimerAction(
         period=5.0,
         actions=[slam_group]
