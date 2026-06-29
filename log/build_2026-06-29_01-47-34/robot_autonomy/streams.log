@@ -1,0 +1,22 @@
+[0.447s] Invoking command in '/home/s43/test_sensor_ws/build/robot_autonomy': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/s43/test_sensor_ws/build/robot_autonomy/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/s43/test_sensor_ws/install/robot_autonomy/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/s43/test_sensor_ws/build/robot_autonomy/build --no-deps symlink_data
+[0.620s] running develop
+[0.725s] running egg_info
+[0.725s] creating robot_autonomy.egg-info
+[0.735s] writing robot_autonomy.egg-info/PKG-INFO
+[0.735s] writing dependency_links to robot_autonomy.egg-info/dependency_links.txt
+[0.735s] writing requirements to robot_autonomy.egg-info/requires.txt
+[0.735s] writing top-level names to robot_autonomy.egg-info/top_level.txt
+[0.735s] writing manifest file 'robot_autonomy.egg-info/SOURCES.txt'
+[0.756s] reading manifest file 'robot_autonomy.egg-info/SOURCES.txt'
+[0.756s] writing manifest file 'robot_autonomy.egg-info/SOURCES.txt'
+[0.767s] running build_ext
+[0.767s] Creating /home/s43/test_sensor_ws/install/robot_autonomy/lib/python3.12/site-packages/robot-autonomy.egg-link (link to .)
+[0.767s] 
+[0.767s] Installed /home/s43/test_sensor_ws/build/robot_autonomy
+[0.767s] running symlink_data
+[0.767s] creating /home/s43/test_sensor_ws/install/robot_autonomy/share/ament_index
+[0.767s] creating /home/s43/test_sensor_ws/install/robot_autonomy/share/ament_index/resource_index
+[0.767s] creating /home/s43/test_sensor_ws/install/robot_autonomy/share/ament_index/resource_index/packages
+[0.767s] symbolically linking /home/s43/test_sensor_ws/build/robot_autonomy/resource/robot_autonomy -> /home/s43/test_sensor_ws/install/robot_autonomy/share/ament_index/resource_index/packages
+[0.767s] symbolically linking /home/s43/test_sensor_ws/build/robot_autonomy/package.xml -> /home/s43/test_sensor_ws/install/robot_autonomy/share/robot_autonomy
+[0.785s] Invoked command in '/home/s43/test_sensor_ws/build/robot_autonomy' returned '0': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PYTHONPATH=/home/s43/test_sensor_ws/build/robot_autonomy/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/s43/test_sensor_ws/install/robot_autonomy/lib/python3.12/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/s43/test_sensor_ws/build/robot_autonomy/build --no-deps symlink_data

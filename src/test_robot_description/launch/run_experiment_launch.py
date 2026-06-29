@@ -93,6 +93,28 @@ def generate_launch_description():
         '<sensor name="gpu_lidar" type="gpu_lidar">\n        <topic>/scan</topic>'
     )
 
+    # PATCH 8 – Inject zero-friction surface into the caster dynamically
+    caster_link_idx = sdf.find('<link name="caster')
+    if caster_link_idx != -1:
+        # Find the closing collision tag specifically for the caster link
+        collision_end_idx = sdf.find('</collision>', caster_link_idx)
+        if collision_end_idx != -1:
+            friction_xml = """
+        <surface>
+          <friction>
+            <ode>
+              <mu>0.0</mu>
+              <mu2>0.0</mu2>
+              <slip1>1.0</slip1>
+              <slip2>1.0</slip2>
+            </ode>
+          </friction>
+        </surface>
+"""
+            # Slice the string and insert the friction block right before </collision>
+            sdf = sdf[:collision_end_idx] + friction_xml + sdf[collision_end_idx:]
+
+
     # =========================================================================
     # LAUNCH NODES
     # =========================================================================
