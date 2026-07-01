@@ -46,6 +46,10 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
   include("/home/s43/test_sensor_ws/build/test_robot_description/ament_cmake_symlink_install/ament_cmake_symlink_install.cmake")
 endif()
 
+if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/test_robot_description" TYPE PROGRAM RENAME "scan_relay_node" FILES "/home/s43/test_sensor_ws/src/test_robot_description/scripts/scan_relay_node.py")
+endif()
+
 if(CMAKE_INSTALL_COMPONENT)
   set(CMAKE_INSTALL_MANIFEST "install_manifest_${CMAKE_INSTALL_COMPONENT}.txt")
 else()

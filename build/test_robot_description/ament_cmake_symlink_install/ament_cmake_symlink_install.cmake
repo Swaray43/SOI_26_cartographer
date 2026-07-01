@@ -315,8 +315,8 @@ message(STATUS "Execute custom install script")
 
 # begin of custom install code
 
-# install(DIRECTORY "launch" "models" "worlds" "config" "DESTINATION" "share/test_robot_description")
-ament_cmake_symlink_install_directory("/home/s43/test_sensor_ws/src/test_robot_description" DIRECTORY "launch" "models" "worlds" "config" "DESTINATION" "share/test_robot_description")
+# install(DIRECTORY "launch" "models" "worlds" "config" "maps" "DESTINATION" "share/test_robot_description")
+ament_cmake_symlink_install_directory("/home/s43/test_sensor_ws/src/test_robot_description" DIRECTORY "launch" "models" "worlds" "config" "maps" "DESTINATION" "share/test_robot_description")
 
 # install(FILES "/home/s43/test_sensor_ws/build/test_robot_description/ament_cmake_index/share/ament_index/resource_index/package_run_dependencies/test_robot_description" "DESTINATION" "share/ament_index/resource_index/package_run_dependencies")
 ament_cmake_symlink_install_files("/home/s43/test_sensor_ws/src/test_robot_description" FILES "/home/s43/test_sensor_ws/build/test_robot_description/ament_cmake_index/share/ament_index/resource_index/package_run_dependencies/test_robot_description" "DESTINATION" "share/ament_index/resource_index/package_run_dependencies")

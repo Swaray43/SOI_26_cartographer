@@ -1,1 +1,0 @@
-/home/s43/test_sensor_ws/src/test_robot_description/launch/complete_navigation.launch.py

@@ -1,1 +1,1 @@
-ros_gz_sim;ros_gz_bridge;teleop_twist_keyboard
+rclpy;sensor_msgs;ros_gz_sim;ros_gz_bridge;slam_toolbox;tf2_ros;nav2_bringup
