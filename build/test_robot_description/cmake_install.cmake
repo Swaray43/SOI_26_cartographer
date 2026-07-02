@@ -47,7 +47,7 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/test_robot_description" TYPE PROGRAM RENAME "scan_relay_node" FILES "/home/s43/test_sensor_ws/src/test_robot_description/scripts/scan_relay_node.py")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/test_robot_description" TYPE PROGRAM RENAME "lidar_tf_publisher" FILES "/home/s43/test_sensor_ws/src/test_robot_description/scripts/lidar_tf_publisher.py")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)

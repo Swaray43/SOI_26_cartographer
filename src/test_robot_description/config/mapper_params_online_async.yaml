@@ -1,40 +1,34 @@
 slam_toolbox:
   ros__parameters:
-    # Core Configurations
     use_sim_time: true
+
     odom_frame: odom
     base_frame: base_link
     map_frame: map
-    scan_topic: /scan_fixed
 
-    # SLAM Mode
+    scan_topic: /robot/scan
+
     mode: mapping
 
-    # 🔧 TUNING 1: Lower thresholds for faster map updates while moving
-    minimum_travel_distance: 0.10     # Was 0.20. Map updates every 10cm instead of 20cm
-    minimum_travel_heading: 0.10      # Was 0.20. Map updates every ~5.7 degrees of turning
+    minimum_travel_distance: 0.05
+    minimum_travel_heading: 0.05
 
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_time_interval: 0.1        # 🔧 TUNING 2: Lowered from 0.2 for higher scan acceptance rate
-    
-    # Timeouts and Buffers
-    transform_timeout: 1.0
+    minimum_time_interval: 0.1
+    transform_timeout: 0.5
     tf_buffer_duration: 30.0
-    stack_size_to_use: 40000000       # Required for Ceres Solver stability
-    
-    # Laser Settings
-    minimum_laser_range: 0.15
+    stack_size_to_use: 40000000
+
+    resolution: 0.05
     max_laser_range: 12.0
-    resolution: 0.05                  # Grid cell size (5cm)
-    
-    # 🔧 TUNING 3: Increase map redraw rate in RViz
-    map_update_interval: 0.5          # Was 2.0. Redraws the map every 0.5s instead of waiting 2 seconds
-    
-    # Core defaults
+    minimum_laser_range: 0.15
+
     map_file_name: ""
     map_start_at_dock: false
+
     debug_logging: false
     throttle_scans: 1
-    transform_publish_period: 0.02    # Publishes map->odom transform at 50Hz
+    transform_publish_period: 0.02
+    map_update_interval: 1.0
     enable_interactive_mode: false

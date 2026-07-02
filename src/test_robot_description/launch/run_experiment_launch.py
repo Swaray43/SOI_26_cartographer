@@ -18,6 +18,7 @@ def generate_launch_description():
     # ── SDF patches ───────────────────────────────────────────────────────
     sdf = sdf.replace('<model name="diff_drive_robot">',
         '<model name="diff_drive_robot">\n    <self_collide>false</self_collide>')
+
     sdf = sdf.replace(
         """<axis>
         <xyz>0 0 1</xyz>
@@ -34,6 +35,7 @@ def generate_launch_description():
         </limit>
         <dynamics><damping>0.01</damping><friction>0.01</friction></dynamics>
       </axis>""")
+
     sdf = sdf.replace('<joint name="caster_joint" type="ball">',
         '<joint name="caster_joint" type="fixed">')
     sdf = sdf.replace('<pose>-0.2 0 -0.08 0 0 0</pose>',
@@ -73,25 +75,13 @@ def generate_launch_description():
         launch_arguments={'gz_args': f'-r {world_path}'}.items()
     )
 
-    # Spawn z calculation:
-    #   robot.sdf model pose:          z = +0.10  (built-in lift)
-    #   SDF patch shifts wheels from   z = -0.025 → 0.0 (+0.025 upward)
-    #   Wheel radius:                       0.10 m
-    #   Bottom of wheel relative to base_link = 0.0 - 0.10 = -0.10 m
-    #   After model pose:              -0.10 + 0.10 = 0.00 m  ← wheel bottoms at ground
-    #   But patch raised wheels by 0.025, so chassis dropped 0.025 into ground.
-    #   Fix: spawn at z = +0.025 to compensate, wheels sit flush on surface.
     spawn_robot = Node(
         package='ros_gz_sim', executable='create',
         arguments=['-string', sdf, '-name', 'robot',
-                   '-x', '0.0', '-y', '0.0', '-z', '5.05'],
+                   '-x', '0.0', '-y', '0.0', '-z', '0.0'],
         output='screen'
     )
 
-    # ── Parameter bridge ──────────────────────────────────────────────────
-    # /cmd_vel : no remapping — goes straight to Gazebo DiffDrive
-    # /odom    : remapped to /robot/odom for downstream consumers
-    # /scan    : remapped to /robot/scan for scan_relay_node input
     parameter_bridge = Node(
         package='ros_gz_bridge', executable='parameter_bridge',
         name='sensor_bridge',
@@ -103,32 +93,35 @@ def generate_launch_description():
             '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
         ],
         remappings=[
-            ('/odom', '/robot/odom'),
-            ('/scan', '/robot/scan'),
+            ('/cmd_vel', '/robot/cmd_vel'),
+            ('/odom',    '/robot/odom'),
+            ('/scan',    '/robot/scan'),
         ],
         output='screen'
     )
 
-    # ── Scan relay ────────────────────────────────────────────────────────
-    # Updated scan_relay_node now does TWO things:
-    #   1. Republishes /robot/scan → /scan_fixed with the ORIGINAL frame_id
-    #      (robot/lidar_link/gpu_lidar) kept intact — ray geometry is correct.
-    #   2. Publishes base_link → robot/lidar_link/gpu_lidar on /tf stamped
-    #      with each scan's sim timestamp — bypasses the Jazzy
-    #      static_transform_publisher wall-clock bug entirely.
-    # No static_transform_publisher node needed.
-    scan_relay = Node(
+    # ── TF publisher node (Python, properly uses sim time) ─────────────────
+    # ROOT CAUSE OF ALL TF FAILURES:
+    # static_transform_publisher ignores use_sim_time in this environment
+    # regardless of how it is passed (ros_arguments, parameters, --ros-args).
+    # It always stamps /tf_static with wall-clock time (~1.78 billion s).
+    # LaserScan carries sim time (~3-70s). TF2 lookup fails → queue full.
+    #
+    # FIX: Replace static_transform_publisher with a minimal Python node
+    # that publishes to /tf (not /tf_static) using the node's own clock.
+    # When parameters=[{'use_sim_time': True}] is set on a Python Node(),
+    # rclpy correctly subscribes to /clock and all self.get_clock() calls
+    # return sim time. The transform is republished every 0.1s so TF2
+    # buffer always has a fresh entry matching current sim time.
+    lidar_tf_node = Node(
         package='test_robot_description',
-        executable='scan_relay_node',
-        name='scan_relay',
+        executable='lidar_tf_publisher',
+        name='lidar_tf_publisher',
         parameters=[{'use_sim_time': True}],
         output='screen'
     )
 
-    # ── slam_toolbox ──────────────────────────────────────────────────────
-    # scan_topic is /scan_fixed (set in mapper_params_online_async.yaml).
-    # slam_toolbox will look up robot/lidar_link/gpu_lidar → base_link → odom
-    # using the TF published by scan_relay_node above.
+    # ── slam_toolbox via official launch ──────────────────────────────────
     slam_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory('slam_toolbox'),
@@ -136,7 +129,6 @@ def generate_launch_description():
         launch_arguments={
             'slam_params_file': slam_params_path,
             'use_sim_time': 'true',
-            'scan_topic': '/scan_fixed',
         }.items()
     )
 
@@ -144,6 +136,6 @@ def generate_launch_description():
         gz_sim,
         spawn_robot,
         parameter_bridge,
-        scan_relay,
+        lidar_tf_node,
         TimerAction(period=5.0, actions=[slam_launch]),
     ])
