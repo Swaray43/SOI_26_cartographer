@@ -16,8 +16,8 @@ slam_toolbox:
     mode: mapping
 
     # ── Map update behaviour ────────────────────────────────────────────────
-    minimum_travel_distance: 0.30
-    minimum_travel_heading: 0.30
+    minimum_travel_distance: 0.20
+    minimum_travel_heading: 0.20
 
     # ── Scan matcher settings ───────────────────────────────────────────────
     use_scan_matching: true
@@ -29,7 +29,7 @@ slam_toolbox:
 
     # ── Map size ────────────────────────────────────────────────────────────
     resolution: 0.05
-    max_laser_range: 12.0       
+    max_laser_range: 12.0       # matches robot.sdf lidar <max>12.0</max>
     minimum_laser_range: 0.40
 
     # ── Serialisation ──────────────────────────────────────────────────────
@@ -38,7 +38,7 @@ slam_toolbox:
 
     # ── Debug ──────────────────────────────────────────────────────────────
     debug_logging: false
-    throttle_scans: 1           
-    transform_publish_period: 0.02   
+    throttle_scans: 1
+    transform_publish_period: 0.02
     map_update_interval: 2.0
     enable_interactive_mode: false

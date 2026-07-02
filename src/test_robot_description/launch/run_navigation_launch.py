@@ -1,4 +1,5 @@
 import os
+import tempfile
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, TimerAction
@@ -8,11 +9,27 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_dir = get_package_share_directory('test_robot_description')
-    world_path = os.path.join(pkg_dir, 'worlds', 'test_ground.sdf')
+    world_path = os.path.join(pkg_dir, 'worlds', 'training_world_2.sdf')
     robot_sdf_path = os.path.join(pkg_dir, 'models', 'robot.sdf')
     
     # Path to your saved map yaml file
     map_yaml_path = '/home/s43/test_sensor_ws/my_first_map.yaml'
+
+    with open(world_path, 'r') as f:
+        world_sdf = f.read()
+
+    sensors_plugin = (
+        '\n    <plugin filename="gz-sim-sensors-system"'
+        ' name="gz::sim::systems::Sensors">'
+        '\n      <render_engine>ogre2</render_engine>'
+        '\n    </plugin>'
+    )
+    world_sdf = world_sdf.replace('  </world>', f'{sensors_plugin}\n  </world>')
+
+    temp_world = tempfile.NamedTemporaryFile(delete=False, suffix='_patched.sdf')
+    temp_world.write(world_sdf.encode('utf-8'))
+    temp_world.close()
+    patched_world_path = temp_world.name
 
     with open(robot_sdf_path, 'r') as f:
         sdf = f.read()
@@ -83,31 +100,33 @@ def generate_launch_description():
 
     # 1. Gazebo Sim
     gz_sim = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([
-            os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')
-        ]),
-        launch_arguments={'gz_args': f'-r {world_path}'}.items()
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('ros_gz_sim'),
+            'launch', 'gz_sim.launch.py')]),
+        launch_arguments={'gz_args': f'-r {patched_world_path}'}.items()
     )
 
-    # 2. Spawn robot
+    # 2. Spawn Robot
     spawn_robot = Node(
-        package='ros_gz_sim',
-        executable='create',
-        arguments=['-string', sdf, '-name', 'robot', '-x', '0.0', '-y', '0.0', '-z', '0.0'],
+        package='ros_gz_sim', executable='create',
+        arguments=['-string', sdf, '-name', 'robot',
+                   '-x', '0.0', '-y', '0.0', '-z', '0.1'],
         output='screen'
     )
 
-    # 3. ROS ↔ Gazebo bridge (Standard Clean Topics, no remappings needed)
+    # 3. Parameter Bridge
     parameter_bridge = Node(
-        package='ros_gz_bridge',
-        executable='parameter_bridge',
+        package='ros_gz_bridge', executable='parameter_bridge',
         name='sensor_bridge',
         arguments=[
             '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-            '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
+            '/robot/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist', # FIX: Gazebo uses /robot/cmd_vel
             '/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry',
             '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
             '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
+        ],
+        remappings=[
+            ('/robot/cmd_vel', '/cmd_vel'), # FIX: Maps the bridge to Nav2's /cmd_vel global topic
         ],
         output='screen'
     )
@@ -127,7 +146,7 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 5. Include Nav2 Bringup (Launches Map Server, AMCL Localization, and Planners)
+    # 5. Include Nav2 Bringup
     nav2_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')
@@ -138,16 +157,10 @@ def generate_launch_description():
         }.items()
     )
 
-    # Give simulation a 5-second headstart to settle down before spawning Nav2
-    nav2_delayed = TimerAction(
-        period=5.0,
-        actions=[nav2_launch]
-    )
-
     return LaunchDescription([
         gz_sim,
         spawn_robot,
         parameter_bridge,
         lidar_static_tf,
-        nav2_delayed,
+        TimerAction(period=5.0, actions=[nav2_launch]),
     ])

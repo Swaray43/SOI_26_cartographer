@@ -1,4 +1,5 @@
 import os
+import tempfile
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, TimerAction
@@ -8,16 +9,41 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_dir = get_package_share_directory('test_robot_description')
-    world_path = os.path.join(pkg_dir, 'worlds', 'test_ground.sdf')
+    world_path = os.path.join(pkg_dir, 'worlds', 'training_world_2.sdf')
     robot_sdf_path = os.path.join(pkg_dir, 'models', 'robot.sdf')
     slam_params_path = os.path.join(pkg_dir, 'config', 'mapper_params_online_async.yaml')
 
-    with open(robot_sdf_path, 'r') as f:
-        sdf = f.read()
+    # =========================================================================
+    # WORLD SDF PATCH
+    # training_world_2.sdf is missing gz-sim-sensors-system (competition file,
+    # cannot be edited). We read it, inject the plugin in memory, and write it
+    # to a temp file so Gazebo picks it up — no edits to the original file.
+    # =========================================================================
+    with open(world_path, 'r') as f:
+        world_sdf = f.read()
+
+    sensors_plugin = (
+        '\n    <plugin filename="gz-sim-sensors-system"'
+        ' name="gz::sim::systems::Sensors">'
+        '\n      <render_engine>ogre2</render_engine>'
+        '\n    </plugin>'
+    )
+    # Insert right before </world> closing tag
+    world_sdf = world_sdf.replace('  </world>', sensors_plugin + '\n  </world>')
+
+    # Write patched world to a temp file that persists for the process lifetime
+    tmp_world = tempfile.NamedTemporaryFile(
+        mode='w', suffix='_training_world_2_patched.sdf', delete=False
+    )
+    tmp_world.write(world_sdf)
+    tmp_world.flush()
+    patched_world_path = tmp_world.name
 
     # =========================================================================
-    # RUNTIME SDF PATCHES
+    # ROBOT SDF PATCHES (Indentation-Proof Version)
     # =========================================================================
+    with open(robot_sdf_path, 'r') as f:
+        sdf = f.read()
 
     # PATCH 1 – Disable self-collision
     sdf = sdf.replace(
@@ -25,23 +51,10 @@ def generate_launch_description():
         '<model name="diff_drive_robot">\n    <self_collide>false</self_collide>'
     )
 
-    # PATCH 2 – Fix wheel joint axes (primary flip fix)
+    # PATCH 2 – Fix wheel joint axes (Targeting the unique xyz tag inside the axes)
     sdf = sdf.replace(
-        """<axis>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1.79769e+308</lower>
-          <upper>1.79769e+308</upper>
-        </limit>
-      </axis>""",
-        """<axis>
-        <xyz expressed_in="__model__">0 1 0</xyz>
-        <limit>
-          <lower>-1.79769e+308</lower>
-          <upper>1.79769e+308</upper>
-        </limit>
-        <dynamics><damping>0.01</damping><friction>0.01</friction></dynamics>
-      </axis>"""
+        '<xyz>0 0 1</xyz>',
+        '<xyz expressed_in="__model__">0 1 0</xyz>\n        <dynamics><damping>0.01</damping><friction>0.01</friction></dynamics>'
     )
 
     # PATCH 3 – Caster joint: ball → fixed
@@ -66,25 +79,15 @@ def generate_launch_description():
         '<link name="right_wheel">\n      <pose>0.15 -0.225 0.0 -1.5707 0 0</pose>'
     )
 
-    # PATCH 6 – Inject explicit topic names into DiffDrive plugin
+    # PATCH 6 – Inject explicit topic names into DiffDrive plugin (Targeting just the header line)
     sdf = sdf.replace(
-        """    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
-        <left_joint>left_wheel_joint</left_joint>
-        <right_joint>right_wheel_joint</right_joint>
-        <wheel_separation>0.45</wheel_separation>
-        <wheel_radius>0.1</wheel_radius>
-    </plugin>""",
-        """    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
-        <left_joint>left_wheel_joint</left_joint>
-        <right_joint>right_wheel_joint</right_joint>
-        <wheel_separation>0.45</wheel_separation>
-        <wheel_radius>0.1</wheel_radius>
+        '<plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">',
+        """<plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
         <topic>/cmd_vel</topic>
         <odom_topic>/odom</odom_topic>
         <tf_topic>/tf</tf_topic>
         <frame_id>odom</frame_id>
-        <child_frame_id>base_link</child_frame_id>
-    </plugin>"""
+        <child_frame_id>base_link</child_frame_id>"""
     )
 
     # PATCH 7 – Inject <topic> into lidar sensor
@@ -97,7 +100,7 @@ def generate_launch_description():
     # LAUNCH NODES
     # =========================================================================
 
-    # 1. Gazebo Sim
+    # 1. Gazebo Sim — loads the patched temp world (has sensors system injected)
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             os.path.join(
@@ -105,17 +108,17 @@ def generate_launch_description():
                 'launch', 'gz_sim.launch.py'
             )
         ]),
-        launch_arguments={'gz_args': f'-r {world_path}'}.items()
+        launch_arguments={'gz_args': f'-r {patched_world_path}'}.items()
     )
 
-    # 2. Spawn robot
+    # 2. Spawn robot — z=0.1 so wheels clear the ground on spawn
     spawn_robot = Node(
         package='ros_gz_sim',
         executable='create',
         arguments=[
             '-string', sdf,
             '-name', 'robot',
-            '-x', '0.0', '-y', '0.0', '-z', '0.0'
+            '-x', '0.0', '-y', '0.0', '-z', '0.1'
         ],
         output='screen'
     )
@@ -155,7 +158,7 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 5. slam_toolbox — delayed start via its official launch file (handles lifecycle transitions automatically)
+    # 5. slam_toolbox — delayed start
     slam_toolbox_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
