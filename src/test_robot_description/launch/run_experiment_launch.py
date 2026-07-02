@@ -15,23 +15,88 @@ def generate_launch_description():
 
     # =========================================================================
     # WORLD SDF PATCH
-    # training_world_2.sdf is missing gz-sim-sensors-system (competition file,
-    # cannot be edited). We read it, inject the plugin in memory, and write it
-    # to a temp file so Gazebo picks it up — no edits to the original file.
     # =========================================================================
     with open(world_path, 'r') as f:
         world_sdf = f.read()
 
+    # PATCH A — flip all dynamic obstacles to static (removes them from physics
+    # solver, was the cause of RTF=4%)
+    world_sdf = world_sdf.replace('<static>false</static>', '<static>true</static>')
+
+    # PATCH B — relax physics: 1ms→2ms, 1000Hz→500Hz
+    # 2ms is a compromise: better RTF than 1ms, but accurate enough wheel
+    # contact simulation to prevent slip-induced odometry drift.
+    # (4ms was too coarse — wheel contact resolved too infrequently → slip)
+    world_sdf = world_sdf.replace(
+        '<max_step_size>0.001</max_step_size>',
+        '<max_step_size>0.002</max_step_size>'
+    )
+    world_sdf = world_sdf.replace(
+        '<real_time_update_rate>1000</real_time_update_rate>',
+        '<real_time_update_rate>500</real_time_update_rate>'
+    )
+
+    # PATCH C — fix ground plane friction
+    # The competition world has empty <ode/> friction tags on the ground,
+    # meaning near-zero friction (wheels slip like on ice).
+    # We inject real friction values so wheel odometry stays accurate.
+    # mu  = static friction coefficient  (1.5 = solid rubber-on-concrete)
+    # mu2 = lateral friction coefficient (prevents sideways sliding)
+    world_sdf = world_sdf.replace(
+        '''        <collision name='collision'>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>''',
+        '''        <collision name='collision'>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.5</mu>
+                <mu2>1.5</mu2>
+                <fdir1>1 0 0</fdir1>
+                <slip1>0.0</slip1>
+                <slip2>0.0</slip2>
+              </ode>
+            </friction>
+            <bounce/>
+            <contact>
+              <ode>
+                <min_depth>0.001</min_depth>
+                <kp>1e6</kp>
+                <kd>100</kd>
+              </ode>
+            </contact>
+          </surface>
+        </collision>'''
+    )
+
+    # PATCH D — inject missing sensors system plugin
     sensors_plugin = (
         '\n    <plugin filename="gz-sim-sensors-system"'
         ' name="gz::sim::systems::Sensors">'
         '\n      <render_engine>ogre2</render_engine>'
         '\n    </plugin>'
     )
-    # Insert right before </world> closing tag
     world_sdf = world_sdf.replace('  </world>', sensors_plugin + '\n  </world>')
 
-    # Write patched world to a temp file that persists for the process lifetime
+    # Write patched world to temp file
     tmp_world = tempfile.NamedTemporaryFile(
         mode='w', suffix='_training_world_2_patched.sdf', delete=False
     )
@@ -40,7 +105,7 @@ def generate_launch_description():
     patched_world_path = tmp_world.name
 
     # =========================================================================
-    # ROBOT SDF PATCHES (Indentation-Proof Version)
+    # ROBOT SDF PATCHES
     # =========================================================================
     with open(robot_sdf_path, 'r') as f:
         sdf = f.read()
@@ -51,10 +116,23 @@ def generate_launch_description():
         '<model name="diff_drive_robot">\n    <self_collide>false</self_collide>'
     )
 
-    # PATCH 2 – Fix wheel joint axes (Targeting the unique xyz tag inside the axes)
+    # PATCH 2 – Fix wheel joint axes
     sdf = sdf.replace(
-        '<xyz>0 0 1</xyz>',
-        '<xyz expressed_in="__model__">0 1 0</xyz>\n        <dynamics><damping>0.01</damping><friction>0.01</friction></dynamics>'
+        """<axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <lower>-1.79769e+308</lower>
+          <upper>1.79769e+308</upper>
+        </limit>
+      </axis>""",
+        """<axis>
+        <xyz expressed_in="__model__">0 1 0</xyz>
+        <limit>
+          <lower>-1.79769e+308</lower>
+          <upper>1.79769e+308</upper>
+        </limit>
+        <dynamics><damping>0.01</damping><friction>0.01</friction></dynamics>
+      </axis>"""
     )
 
     # PATCH 3 – Caster joint: ball → fixed
@@ -79,15 +157,25 @@ def generate_launch_description():
         '<link name="right_wheel">\n      <pose>0.15 -0.225 0.0 -1.5707 0 0</pose>'
     )
 
-    # PATCH 6 – Inject explicit topic names into DiffDrive plugin (Targeting just the header line)
+    # PATCH 6 – Inject explicit topic names into DiffDrive plugin
     sdf = sdf.replace(
-        '<plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">',
-        """<plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+        """    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+        <left_joint>left_wheel_joint</left_joint>
+        <right_joint>right_wheel_joint</right_joint>
+        <wheel_separation>0.45</wheel_separation>
+        <wheel_radius>0.1</wheel_radius>
+    </plugin>""",
+        """    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+        <left_joint>left_wheel_joint</left_joint>
+        <right_joint>right_wheel_joint</right_joint>
+        <wheel_separation>0.45</wheel_separation>
+        <wheel_radius>0.1</wheel_radius>
         <topic>/cmd_vel</topic>
         <odom_topic>/odom</odom_topic>
         <tf_topic>/tf</tf_topic>
         <frame_id>odom</frame_id>
-        <child_frame_id>base_link</child_frame_id>"""
+        <child_frame_id>base_link</child_frame_id>
+    </plugin>"""
     )
 
     # PATCH 7 – Inject <topic> into lidar sensor
@@ -100,7 +188,6 @@ def generate_launch_description():
     # LAUNCH NODES
     # =========================================================================
 
-    # 1. Gazebo Sim — loads the patched temp world (has sensors system injected)
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
             os.path.join(
@@ -111,7 +198,6 @@ def generate_launch_description():
         launch_arguments={'gz_args': f'-r {patched_world_path}'}.items()
     )
 
-    # 2. Spawn robot — z=0.1 so wheels clear the ground on spawn
     spawn_robot = Node(
         package='ros_gz_sim',
         executable='create',
@@ -123,7 +209,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 3. ROS ↔ Gazebo bridge
     parameter_bridge = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -143,7 +228,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 4. Static TF: base_link → robot/lidar_link/gpu_lidar
     lidar_static_tf = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -158,7 +242,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 5. slam_toolbox — delayed start
     slam_toolbox_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')

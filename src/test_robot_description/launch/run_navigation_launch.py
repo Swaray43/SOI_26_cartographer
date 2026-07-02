@@ -11,32 +11,49 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('test_robot_description')
     world_path = os.path.join(pkg_dir, 'worlds', 'training_world_2.sdf')
     robot_sdf_path = os.path.join(pkg_dir, 'models', 'robot.sdf')
-    
-    # Path to your saved map yaml file
     map_yaml_path = '/home/s43/test_sensor_ws/my_first_map.yaml'
 
+    # =========================================================================
+    # WORLD SDF PATCH
+    # =========================================================================
     with open(world_path, 'r') as f:
         world_sdf = f.read()
 
+    # PATCH A — flip all dynamic obstacles to static (fixes RTF=4%)
+    world_sdf = world_sdf.replace('<static>false</static>', '<static>true</static>')
+
+    # PATCH B — relax physics: 1ms→4ms, 1000Hz→250Hz
+    world_sdf = world_sdf.replace(
+        '<max_step_size>0.001</max_step_size>',
+        '<max_step_size>0.004</max_step_size>'
+    )
+    world_sdf = world_sdf.replace(
+        '<real_time_update_rate>1000</real_time_update_rate>',
+        '<real_time_update_rate>250</real_time_update_rate>'
+    )
+
+    # PATCH C — inject missing sensors system plugin
     sensors_plugin = (
         '\n    <plugin filename="gz-sim-sensors-system"'
         ' name="gz::sim::systems::Sensors">'
         '\n      <render_engine>ogre2</render_engine>'
         '\n    </plugin>'
     )
-    world_sdf = world_sdf.replace('  </world>', f'{sensors_plugin}\n  </world>')
+    world_sdf = world_sdf.replace('  </world>', sensors_plugin + '\n  </world>')
 
-    temp_world = tempfile.NamedTemporaryFile(delete=False, suffix='_patched.sdf')
-    temp_world.write(world_sdf.encode('utf-8'))
-    temp_world.close()
-    patched_world_path = temp_world.name
+    tmp_world = tempfile.NamedTemporaryFile(
+        mode='w', suffix='_training_world_2_patched.sdf', delete=False
+    )
+    tmp_world.write(world_sdf)
+    tmp_world.flush()
+    patched_world_path = tmp_world.name
 
+    # =========================================================================
+    # ROBOT SDF PATCHES
+    # =========================================================================
     with open(robot_sdf_path, 'r') as f:
         sdf = f.read()
 
-    # =========================================================================
-    # RUNTIME SDF PATCHES
-    # =========================================================================
     sdf = sdf.replace(
         '<model name="diff_drive_robot">',
         '<model name="diff_drive_robot">\n    <self_collide>false</self_collide>'
@@ -98,40 +115,38 @@ def generate_launch_description():
         '<sensor name="gpu_lidar" type="gpu_lidar">\n        <topic>/scan</topic>'
     )
 
-    # 1. Gazebo Sim
+    # =========================================================================
+    # LAUNCH NODES
+    # =========================================================================
+
     gz_sim = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([os.path.join(
-            get_package_share_directory('ros_gz_sim'),
-            'launch', 'gz_sim.launch.py')]),
+        PythonLaunchDescriptionSource([
+            os.path.join(get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')
+        ]),
         launch_arguments={'gz_args': f'-r {patched_world_path}'}.items()
     )
 
-    # 2. Spawn Robot
     spawn_robot = Node(
-        package='ros_gz_sim', executable='create',
-        arguments=['-string', sdf, '-name', 'robot',
-                   '-x', '0.0', '-y', '0.0', '-z', '0.1'],
+        package='ros_gz_sim',
+        executable='create',
+        arguments=['-string', sdf, '-name', 'robot', '-x', '0.0', '-y', '0.0', '-z', '0.1'],
         output='screen'
     )
 
-    # 3. Parameter Bridge
     parameter_bridge = Node(
-        package='ros_gz_bridge', executable='parameter_bridge',
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
         name='sensor_bridge',
         arguments=[
             '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
-            '/robot/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist', # FIX: Gazebo uses /robot/cmd_vel
+            '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
             '/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry',
             '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
             '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
         ],
-        remappings=[
-            ('/robot/cmd_vel', '/cmd_vel'), # FIX: Maps the bridge to Nav2's /cmd_vel global topic
-        ],
         output='screen'
     )
 
-    # 4. Static TF: base_link → robot/lidar_link/gpu_lidar
     lidar_static_tf = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
@@ -146,7 +161,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 5. Include Nav2 Bringup
     nav2_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py')
@@ -157,10 +171,12 @@ def generate_launch_description():
         }.items()
     )
 
+    nav2_delayed = TimerAction(period=5.0, actions=[nav2_launch])
+
     return LaunchDescription([
         gz_sim,
         spawn_robot,
         parameter_bridge,
         lidar_static_tf,
-        TimerAction(period=5.0, actions=[nav2_launch]),
+        nav2_delayed,
     ])
