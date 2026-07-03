@@ -31,8 +31,8 @@ slam_toolbox:
     do_loop_closing: true
     loop_match_minimum_chain_size: 10
     loop_match_maximum_variance_coarse: 3.0
-    loop_match_minimum_response_coarse: 0.35
-    loop_match_minimum_response_fine: 0.45
+    loop_match_minimum_response_coarse: 0.30
+    loop_match_minimum_response_fine: 0.40
 
     # ── Correlation (scan matching search window) ───────────────────────────
     # Wider search window catches more drift before giving up
