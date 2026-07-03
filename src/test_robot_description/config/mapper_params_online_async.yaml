@@ -16,40 +16,39 @@ slam_toolbox:
     mode: mapping
 
     # ── Map update behaviour ────────────────────────────────────────────────
-    # How far the robot must move before a new scan is added to the map.
-    # Lower = more scans = more accurate but heavier CPU.
-    # 0.1m / 0.1rad means scans are added every 10cm or ~6 degrees of turn.
-    minimum_travel_distance: 0.10
-    minimum_travel_heading: 0.10
-
+    minimum_travel_distance: 0.05
+    minimum_travel_heading: 0.05
     # ── Scan matcher settings ───────────────────────────────────────────────
-    use_scan_matching: true       # align each scan to the existing map before adding it
-    use_scan_barycenter: true
-    minimum_time_interval: 0.2
-    transform_timeout: 0.5        # raised from 0.2 — gives TF more time to arrive
+    use_scan_matching: true
+    use_scan_barycenter: false
+    minimum_time_interval: 0.15     # lowered: accept scans more frequently
+    transform_timeout: 0.5
     tf_buffer_duration: 30.0
     stack_size_to_use: 40000000
 
     # ── Loop closure ───────────────────────────────────────────────────────
-    # Loop closure = when the robot revisits a known place, SLAM snaps the
-    # map back into alignment, correcting all accumulated drift.
-    # This is the primary fix for duplicate/overlapping walls.
-    loop_search_maximum_distance: 3.0   # how far to search for a matching prior scan
+    loop_search_maximum_distance: 3.0
     do_loop_closing: true
-    loop_match_minimum_chain_size: 10   # min scans needed before attempting closure
+    loop_match_minimum_chain_size: 10
     loop_match_maximum_variance_coarse: 3.0
     loop_match_minimum_response_coarse: 0.35
     loop_match_minimum_response_fine: 0.45
 
-    # ── Correlation parameters ──────────────────────────────────────────────
-    # Controls how aggressively scan matching searches for the best alignment.
-    correlation_search_space_dimension: 0.5
-    correlation_search_space_resolution: 0.01
-    correlation_search_space_smear_deviation: 0.1
+    # ── Correlation (scan matching search window) ───────────────────────────
+    # Wider search window catches more drift before giving up
+    correlation_search_space_dimension: 0.7
+    correlation_search_space_resolution: 0.014
+    correlation_search_space_smear_deviation: 0.03
+
+    # ── Fine scan matching ──────────────────────────────────────────────────
+    # Controls the precise alignment step after coarse correlation
+    fine_search_angle_offset: 0.00349    # ~0.2 degrees
+    coarse_search_angle_offset: 0.349    # ~20 degrees - wide enough to catch heading drift
+    coarse_angle_resolution: 0.0349      # ~2 degrees steps in coarse search
 
     # ── Map size ────────────────────────────────────────────────────────────
     resolution: 0.05
-    max_laser_range: 12.0         # matches robot.sdf lidar <max>12.0</max>
+    max_laser_range: 12.0
     minimum_laser_range: 0.40
 
     # ── Serialisation ──────────────────────────────────────────────────────
@@ -57,8 +56,8 @@ slam_toolbox:
     map_start_at_dock: false
 
     # ── Debug ──────────────────────────────────────────────────────────────
-    debug_logging: false
+    debug_logging: true
     throttle_scans: 1
     transform_publish_period: 0.02
-    map_update_interval: 2.0
+    map_update_interval: 1.0      # lowered from 2.0: map refreshes more often
     enable_interactive_mode: false

@@ -9,24 +9,20 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_dir = get_package_share_directory('test_robot_description')
-    world_path = os.path.join(pkg_dir, 'worlds', 'training_world_2.sdf')
-    robot_sdf_path = os.path.join(pkg_dir, 'models', 'robot.sdf')
+    world_path       = os.path.join(pkg_dir, 'worlds', 'training_world_2.sdf')
+    robot_sdf_path   = os.path.join(pkg_dir, 'models', 'robot.sdf')
     slam_params_path = os.path.join(pkg_dir, 'config', 'mapper_params_online_async.yaml')
 
     # =========================================================================
-    # WORLD SDF PATCH
+    # WORLD SDF PATCHES
     # =========================================================================
     with open(world_path, 'r') as f:
         world_sdf = f.read()
 
-    # PATCH A — flip all dynamic obstacles to static (removes them from physics
-    # solver, was the cause of RTF=4%)
+    # PATCH A — flip all dynamic obstacles to static
     world_sdf = world_sdf.replace('<static>false</static>', '<static>true</static>')
 
     # PATCH B — relax physics: 1ms→2ms, 1000Hz→500Hz
-    # 2ms is a compromise: better RTF than 1ms, but accurate enough wheel
-    # contact simulation to prevent slip-induced odometry drift.
-    # (4ms was too coarse — wheel contact resolved too infrequently → slip)
     world_sdf = world_sdf.replace(
         '<max_step_size>0.001</max_step_size>',
         '<max_step_size>0.002</max_step_size>'
@@ -36,12 +32,7 @@ def generate_launch_description():
         '<real_time_update_rate>500</real_time_update_rate>'
     )
 
-    # PATCH C — fix ground plane friction
-    # The competition world has empty <ode/> friction tags on the ground,
-    # meaning near-zero friction (wheels slip like on ice).
-    # We inject real friction values so wheel odometry stays accurate.
-    # mu  = static friction coefficient  (1.5 = solid rubber-on-concrete)
-    # mu2 = lateral friction coefficient (prevents sideways sliding)
+    # PATCH C — fix ground plane friction (was empty <ode/> = near-zero friction)
     world_sdf = world_sdf.replace(
         '''        <collision name='collision'>
           <geometry>
@@ -96,7 +87,6 @@ def generate_launch_description():
     )
     world_sdf = world_sdf.replace('  </world>', sensors_plugin + '\n  </world>')
 
-    # Write patched world to temp file
     tmp_world = tempfile.NamedTemporaryFile(
         mode='w', suffix='_training_world_2_patched.sdf', delete=False
     )
@@ -158,6 +148,10 @@ def generate_launch_description():
     )
 
     # PATCH 6 – Inject explicit topic names into DiffDrive plugin
+    # FIX: search string uses 0.45 (matches robot.sdf exactly),
+    # replacement sets it to 0.475 (calibrated effective track width).
+    # Previously the search used 0.475 which never matched → patch
+    # silently failed → no frame_id/tf_topic injected → odom broken.
     sdf = sdf.replace(
         """    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
         <left_joint>left_wheel_joint</left_joint>
@@ -168,7 +162,7 @@ def generate_launch_description():
         """    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
         <left_joint>left_wheel_joint</left_joint>
         <right_joint>right_wheel_joint</right_joint>
-        <wheel_separation>0.45</wheel_separation>
+        <wheel_separation>0.475</wheel_separation>
         <wheel_radius>0.1</wheel_radius>
         <topic>/cmd_vel</topic>
         <odom_topic>/odom</odom_topic>
@@ -182,6 +176,36 @@ def generate_launch_description():
     sdf = sdf.replace(
         '<sensor name="gpu_lidar" type="gpu_lidar">',
         '<sensor name="gpu_lidar" type="gpu_lidar">\n        <topic>/scan</topic>'
+    )
+
+    # PATCH 8 – Fix base_link friction
+    sdf = sdf.replace(
+        """      <collision name="collision">
+        <geometry><box><size>0.5 0.4 0.1</size></box></geometry>
+        <surface>
+          <friction>
+            <ode><mu>0.1</mu><mu2>0.1</mu2></ode>
+          </friction>
+        </surface>
+      </collision>""",
+        """      <collision name="collision">
+        <geometry><box><size>0.5 0.4 0.1</size></box></geometry>
+        <surface>
+          <friction>
+            <ode><mu>0.8</mu><mu2>0.8</mu2></ode>
+          </friction>
+        </surface>
+      </collision>"""
+    )
+
+    # PATCH 9 – Remove PosePublisher plugin (conflicts with static TF)
+    sdf = sdf.replace(
+        """    <plugin filename="gz-sim-pose-publisher-system" name="gz::sim::systems::PosePublisher">
+        <publish_link_pose>true</publish_link_pose>
+        <use_pose_vector_msg>true</use_pose_vector_msg>
+        <publish_nested_model_pose>true</publish_nested_model_pose>
+    </plugin>""",
+        """    <!-- PosePublisher removed: conflicted with static_transform_publisher -->"""
     )
 
     # =========================================================================
@@ -204,7 +228,7 @@ def generate_launch_description():
         arguments=[
             '-string', sdf,
             '-name', 'robot',
-            '-x', '0.0', '-y', '0.0', '-z', '0.1'
+            '-x', '-1.0', '-y', '-0.5', '-z', '0.15'
         ],
         output='screen'
     )
@@ -244,7 +268,10 @@ def generate_launch_description():
 
     slam_toolbox_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory('slam_toolbox'), 'launch', 'online_async_launch.py')
+            os.path.join(
+                get_package_share_directory('slam_toolbox'),
+                'launch', 'online_async_launch.py'
+            )
         ),
         launch_arguments={
             'slam_params_file': slam_params_path,
@@ -252,10 +279,7 @@ def generate_launch_description():
         }.items()
     )
 
-    slam_delayed = TimerAction(
-        period=5.0,
-        actions=[slam_toolbox_launch]
-    )
+    slam_delayed = TimerAction(period=5.0, actions=[slam_toolbox_launch])
 
     return LaunchDescription([
         gz_sim,
