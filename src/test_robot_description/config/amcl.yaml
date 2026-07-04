@@ -1,0 +1,50 @@
+amcl:
+  ros__parameters:
+    use_sim_time: true
+
+    # ── Frames — must match what slam_toolbox used ─────────────────────────
+    base_frame_id: base_link
+    odom_frame_id: odom
+    global_frame_id: map
+
+    # ── Sensor topic ────────────────────────────────────────────────────────
+    scan_topic: /robot/scan
+
+    # ── Particle filter size ────────────────────────────────────────────────
+    # More particles = more accurate but more CPU. Good starting range: 500–2000
+    min_particles: 500
+    max_particles: 2000
+
+    # ── Motion model — how much to trust wheel odometry between updates ────
+    # These represent expected odometry noise per meter/radian traveled.
+    # Since we confirmed your odometry is fairly accurate (~2% error earlier),
+    # we can keep these moderate rather than very high.
+    alpha1: 0.2   # rotation noise from rotation
+    alpha2: 0.2   # rotation noise from translation
+    alpha3: 0.2   # translation noise from translation
+    alpha4: 0.2   # translation noise from rotation
+    alpha5: 0.2   # translation noise from strafe (unused in diff-drive, harmless)
+
+    robot_model_type: "nav2_amcl::DifferentialMotionModel"
+
+    # ── Laser model ──────────────────────────────────────────────────────────
+    laser_model_type: "likelihood_field"
+    laser_max_range: 12.0        # matches your slam_toolbox max_laser_range
+    laser_min_range: 0.40        # matches your minimum_laser_range
+    laser_max_beams: 60          # how many scan rays to actually use per update
+
+    # ── Update thresholds — how far the robot must move before re-localizing ─
+    update_min_d: 0.10
+    update_min_a: 0.10
+
+    # ── Resampling ───────────────────────────────────────────────────────────
+    resample_interval: 1
+    recovery_alpha_slow: 0.001
+    recovery_alpha_fast: 0.1
+
+    # ── Initial pose (can also be set live via RViz "2D Pose Estimate") ─────
+    set_initial_pose: false
+    always_reset_initial_pose: false
+
+    tf_broadcast: true
+    transform_tolerance: 1.0
